@@ -4,18 +4,19 @@
 using std::size_t;
 #include <utility>
 
-using Format = enum {kRow, kColumn};
+using Format = enum Format_{Row, Column};
 
-template<class T, Format format = kRow>
+template<class T>
 class Vector {
 private:
     T* _data = nullptr;
     size_t _size = 0;
+    Format _format = Row;
 public:
     Vector() = delete;
-    explicit Vector(size_t size);
-    Vector(T* data, size_t size);
-    Vector(std::initializer_list<T> initializerList);
+    explicit Vector(size_t size, Format format = Row);
+    Vector(T* data, size_t size, Format format = Row);
+    Vector(std::initializer_list<T> initializerList, Format = Row);
     Vector(const Vector& other);
     ~Vector();
     Vector(Vector&& other) noexcept;
@@ -38,22 +39,23 @@ public:
     Vector& operator+=(const T& elem);
     Vector& operator*=(const T& elem);
 
-    friend Vector operator*(const T& a, const Vector& b);
-    friend Vector operator+(const T& a, const Vector& b);
-    friend Vector operator-(const T& a, const Vector& b);
+    template<class U>
+    friend Vector<U> operator*(const U& a, const Vector<U>& b);
+    template<class U>
+    friend Vector<U> operator+(const U& a, const Vector<U>& b);
+    template<class U>
+    friend Vector<U> operator-(const U& a, const Vector<U>& b);
 
     T operator[](size_t idx) const;
     T& operator[](size_t idx);
 
-    void set_format(Format new_format);
-
     size_t size() const;
+    void set_format(Format format);
+    Format get_format();
     void swap(Vector& other) noexcept;
 
-    using iterator = T*;
-    using const_iterator = const T*;
-    iterator begin();
-    iterator end();
+    T* begin();
+    T* end();
 };
 
 #endif //TECHNOPARK_CPP_TASK_2_VECTOR_HPP

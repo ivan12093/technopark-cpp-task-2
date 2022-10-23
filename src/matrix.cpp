@@ -5,12 +5,11 @@
 
 template<class T>
 Matrix<T>::Matrix(size_t _rows, size_t _cols): rows(_rows), cols(_cols) {
-    assert(rows > 0);
-    assert(cols > 0);
-    data = new T*[rows];
+    assert(rows != 0);
+    assert(cols != 0);
+    data = Vector<Vector<T>>(rows);
     for (size_t i = 0 ; i < rows; ++i)
-        data[i] = new T[cols]();
-
+        data[i] = Vector<T>(cols);
 }
 
 template<class T>
@@ -22,10 +21,6 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
 
 template<class T>
 Matrix<T>::~Matrix() {
-    for (size_t i = 0; i < rows; ++i)
-        delete[] data[i], data[i] = nullptr;
-    delete data;
-    data = nullptr;
     rows = 0;
     cols = 0;
 }
@@ -40,10 +35,10 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& other) {
 }
 
 template<class T>
-void swap(Matrix<T>& a, Matrix<T> &b) noexcept {
-    std::swap(a.data, b.data);
-    std::swap(a.rows, b.rows);
-    std::swap(a.cols, b.cols);
+void Matrix<T>::swap(Matrix<T> &other) noexcept {
+    std::swap(data, other.data);
+    std::swap(rows, other.rows);
+    std::swap(cols, other.cols);
 }
 
 template<class T>
@@ -63,10 +58,14 @@ Matrix<T>::Matrix(Matrix<T> &&other) noexcept {
 }
 
 template<class T>
-Matrix<T>::Matrix(T **_data, size_t rows, size_t cols) {
-    Matrix(rows, cols);
+Matrix<T>::Matrix(T **_data, size_t _rows, size_t _cols) {
+    assert(_rows != 0);
+    assert(_rows != 0);
+    data = Vector<Vector<T>>(rows);
+    rows = _rows;
+    cols = _cols;
     for (size_t i = 0; i < rows; ++i)
-        std::copy(_data[i], _data[i] + cols, data[i]);
+        data[i] = Vector<T>(_data[i], cols);
 }
 
 template<class T>
@@ -148,4 +147,67 @@ Vector<T> Matrix<T>::getDiag() const {
     Vector<T> result(elems_in_diag);
     for (size_t i = 0; i < elems_in_diag; ++i)
         result[i] = data[i][i];
+}
+
+template<class T>
+Matrix<T>::Matrix(Vector<Vector<T>> vec_of_vec): Matrix(vec_of_vec.size(), vec_of_vec[0].size()) {
+    data = vec_of_vec;
+}
+
+template<class T>
+Matrix<T>::Matrix(Vector<T> *vectors, size_t size) {
+    assert(size != 0);
+    rows = size;
+    cols = vectors[0].size();
+    data = Vector<Vector<T>>(size);
+    for (size_t i = 0; i < rows; ++i)
+        data[i] = vectors[i];
+}
+
+template<class T>
+Matrix<T>::Matrix(std::initializer_list<Vector<T>> initializerList) {
+    static_assert(initializerList.size() != 0);
+    rows = initializerList.size();
+    cols = initializerList.begin()->size();
+    data = Vector<Vector<T>>(rows);
+    for (auto it_src = initializerList.begin(),
+              it_dst = data.begin(); it_src < initializerList.end(); ++it_src, ++it_dst)
+        *it_dst = *it_src;
+}
+
+template<class T>
+Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initializerList) {
+    static_assert(initializerList.size() != 0);
+    rows = initializerList.size();
+    cols = initializerList.begin()->size();
+    static_assert(cols != 0);
+    data = Vector<Vector<T>>(rows);
+    for (auto it_src = initializerList.begin(),
+              it_dst = data.begin(); it_src < initializerList.end(); ++it_src, ++it_dst) {
+        static_assert(it_src->size() == cols);
+        *it_dst = *it_src;
+    }
+}
+
+template<class T>
+Vector<T> Matrix<T>::getColumn(size_t idx) const {
+    Vector<T> result(rows, Column);
+    for (size_t i = 0; i < rows; ++i)
+        result[i] = data[i][idx];
+    return result;
+}
+
+template<class T>
+Vector<T> Matrix<T>::operator[](size_t idx) const {
+    return data[idx];
+}
+
+template<class T>
+Vector<T>& Matrix<T>::operator[](size_t idx) {
+    return data[idx];
+}
+
+template<class T>
+std::pair<size_t, size_t> Matrix<T>::size() const {
+    return std::make_pair(rows, cols);
 }
