@@ -1,7 +1,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "matrix.h"
+#include "matrix.hpp"
 
 template<class T>
 Matrix<T>::Matrix(size_t _rows, size_t _cols): rows(_rows), cols(_cols) {
@@ -135,4 +135,17 @@ Matrix<T> operator*(const Matrix<T> &a, const T &b) {
         for (size_t j = 0; j < a.cols; ++j)
             result.data[i][j] = a.data[i][j] * b;
     return result;
+}
+
+template<class T>
+T Matrix<T>::determinant() {
+
+}
+
+template<class T>
+Vector<T> Matrix<T>::getDiag() const {
+    size_t elems_in_diag = std::min(rows, cols);
+    Vector<T> result(elems_in_diag);
+    for (size_t i = 0; i < elems_in_diag; ++i)
+        result[i] = data[i][i];
 }
