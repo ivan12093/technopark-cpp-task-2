@@ -24,4 +24,4 @@ jobs:
       run: sudo apt -y install gcovr
 
     - name: Coverage
-      run: cd ${{github.workspace}}/scripts && ./coverage.sh
+      run: cd ${{github.workspace}}/scripts && sudo ./coverage.sh
