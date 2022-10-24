@@ -21,7 +21,7 @@ jobs:
       run: git submodule update --init
 
     - name: Install gcovr
-      run: apt install gcovr
+      run: sudo apt -y install gcovr
 
     - name: Coverage
       run: cd ${{github.workspace}}/scripts.sh && ./coverage.sh
