@@ -8,6 +8,12 @@ for (size_t i = 0; i < a.size().first; ++i)                               \
 for (size_t j = 0; j < a.size().second; ++j)                              \
 EXPECT_EQ(a[i][j], b[i][j]);
 
+#define EXPECT_EQ_MATRIX_DBL(a, b) ASSERT_EQ(a.size().first, b.size().first); \
+ASSERT_EQ(a.size().second, b.size().second);                          \
+for (size_t i = 0; i < a.size().first; ++i)                               \
+for (size_t j = 0; j < a.size().second; ++j)                              \
+EXPECT_DOUBLE_EQ(a[i][j], b[i][j]);
+
 #define EXPECT_EQ_VECTOR(a, b) ASSERT_EQ(a.size(), b.size()); \
 EXPECT_EQ(a.get_format(), b.get_format());                                \
 for (size_t i = 0; i < a.size(); ++i)                         \
@@ -251,11 +257,26 @@ TEST(Matrix_functionality, Get_Projections) {
 
 
 TEST(Matrix_Determinant, Default) {
-    Matrix<int> matrix = {
-            {1, 2, 3},
-            {4, 5, 6},
-            {7, 1, 9}
+    Matrix<double> matrix = {
+            {1.0, 2.0, 3.0},
+            {4.0, 5.0, 6.0},
+            {7.0, 1.0, 9.0}
     };
-    int det = matrix.determinant();
-    EXPECT_EQ(det, -42);
+    double det = matrix.determinant();
+    EXPECT_DOUBLE_EQ(det, -42);
+}
+
+TEST(Matrix_Inversed, Default) {
+    Matrix<double> matrix = {
+            {1.0, 2.0, 3.0},
+            {4.0, 5.0, 6.0},
+            {7.0, 1.0, 9.0}
+    };
+    Matrix<double> res = {
+            {-13. / 14, 5. / 14, 1. / 14},
+            {-1. / 7, 2. / 7, -1. / 7},
+            {31. / 42, -13. / 42, 1. / 14}
+    };
+    auto inversed = matrix.inversed();
+    EXPECT_EQ_MATRIX_DBL(inversed, res);
 }

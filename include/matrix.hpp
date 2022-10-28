@@ -28,8 +28,8 @@ public:
     Matrix& operator=(const Matrix& other);
     Matrix& operator=(Matrix&& other) noexcept;
 
-    Matrix transposed();
-    //Matrix inversed();
+    Matrix transposed() const;
+    Matrix inversed() const;
     T determinant() const;
 
     Matrix operator-(const Matrix& other);
@@ -139,7 +139,7 @@ Matrix<T>::Matrix(T **_data, size_t _rows, size_t _cols) {
 }
 
 template<class T>
-Matrix<T> Matrix<T>::transposed() {
+Matrix<T> Matrix<T>::transposed() const {
     Matrix result(cols, rows);
     for (size_t i = 0; i < rows; ++i)
         for (size_t j = 0; j < cols; ++j)
@@ -210,7 +210,30 @@ T Matrix<T>::_determinant(const Matrix& mtx) const {
 
 template<class T>
 T Matrix<T>::determinant() const {
-    return _determinant(*this);
+    assert(rows == cols);
+    Matrix<T> tmp(*this);
+    T det(1);
+    for (size_t i = 0; i < rows; ++i) {
+        size_t k = i;
+        for (size_t j = i + 1; j < rows; ++j)
+            if (abs(tmp[j][i]) > abs(tmp[k][i]))
+                k = j;
+        if (abs(tmp[k][i]) < DBL_EPSILON) {
+            det = 0;
+            break;
+        }
+        tmp[i].swap(tmp[k]);
+        if (i != k)
+            det = -det;
+        det *= tmp[i][i];
+        for (size_t j = i + 1; j < rows; ++j)
+            tmp.data[i][j] /= tmp[i][i];
+        for (size_t j = 0; j < rows; ++j)
+            if (j != i && abs(tmp[j][i]) > DBL_EPSILON)
+                for (size_t q = i + 1; q < rows; ++q)
+                    tmp[j][q] -= tmp[i][q] * tmp[j][i];
+    }
+    return det;
 }
 
 template<class T>
@@ -311,7 +334,7 @@ template<class T>
 Matrix<T> Matrix<T>::operator-(const T &other) {
     Matrix result(*this);
     for (size_t i = 0; i < rows; ++i)
-        result.data[i] -= other;
+        result[i] -= other;
     return result;
 }
 
@@ -319,7 +342,7 @@ template<class T>
 Matrix<T> Matrix<T>::operator+(const T &other) {
     Matrix result(*this);
     for (size_t i = 0; i < rows; ++i)
-        result.data[i] += other;
+        result[i] += other;
     return result;
 }
 
@@ -327,7 +350,7 @@ template<class T>
 Matrix<T> Matrix<T>::operator*(const T &other) {
     Matrix result(*this);
     for (size_t i = 0; i < rows; ++i)
-        result.data[i] *= other;
+        result[i] *= other;
     return result;
 }
 
@@ -425,14 +448,58 @@ Matrix<T> Matrix<T>::downsized(size_t row, size_t col) const {
     Matrix res(*this);
     assert(res.rows != 0);
     for (size_t i = row; i < rows - 1; ++i)
-        res.data[i] = res.data[i + 1];
+        res[i] = res[i + 1];
     --res.rows;
     assert(res.rows != 0);
     for (size_t j = col; j < cols - 1; ++j)
         for (size_t i = 0; i < res.rows; ++i)
-            res.data[i][j] = res.data[i][j + 1];
+            res[i][j] = res[i][j + 1];
     --res.cols;
     return res;
+}
+
+template<class T>
+Matrix<T> Matrix<T>::inversed() const {
+    assert(rows == cols);
+    Matrix result(rows, rows);
+    Matrix tmp(*this);
+    for (size_t i = 0; i < rows; ++i)
+        result[i][i] = 1;
+
+    Matrix<T> concat(rows, 2 * rows);
+    for (size_t i = 0; i < rows; ++i)
+        for (size_t j = 0; j < rows; ++j) {
+            concat[i][j] = tmp[i][j];
+            concat[i][j + rows] = result[i][j];
+        }
+
+    for (size_t k = 0; k < rows; ++k) {
+        for (size_t i = 0; i < 2 * rows; ++i)
+            concat[k][i] /= tmp[k][k];
+        for (size_t i = k + 1; i < rows; ++i) {
+            T K = concat[i][k] / concat[k][k];
+            for (size_t j = 0; j < 2 * rows; ++j)
+                concat[i][j] -= concat[k][j] * K;
+        }
+        for (size_t i = 0; i < rows; ++i)
+            for (size_t j = 0; j < rows; ++j)
+                tmp[i][j] = concat[i][j];
+    }
+    int rows_int = static_cast<int>(rows);
+    for (int k = rows_int - 1; k >= 0; --k) {
+        for (int i = 2 * rows_int - 1; i >= 0; --i)
+            concat[k][i] /= tmp[k][k];
+        for (int i = k - 1; i >= 0; --i) {
+            T K = concat[i][k] / concat[k][k];
+            std::cerr << k << " " << concat[k][k] << "\n";
+            for (int j = 2 * rows_int - 1; j >= 0; --j)
+                concat[i][j] -= concat[k][j] * K;
+        }
+    }
+    for (size_t i = 0; i < rows; ++i)
+        for (size_t j = 0; j < rows; ++j)
+            result[i][j] = concat[i][j + rows];
+    return result;
 }
 
 #endif //TECHNOPARK_CPP_TASK_2_MATRIX_HPP
