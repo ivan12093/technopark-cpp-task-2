@@ -1,4 +1,4 @@
-name: CMake
+name: Checks
 
 on:
   push:
@@ -6,12 +6,8 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Debug
-
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +16,28 @@ jobs:
     - name: Submodule update
       run: git submodule update --init
 
-    - name: Install gcovr
-      run: sudo apt -y install gcovr
+    - name: Install lcov
+      run: sudo apt -y install lcov
 
-    - name: Coverage
-      run: cd ${{github.workspace}}/scripts && ls -la && chmod +x ./coverage.sh && sudo ./coverage.sh
+    - name: Build
+      run: cmake -H. -Bbuild  -DBUILD_COVERAGE=ON && cmake --build build
+
+    - name: Run tests
+      run: cmake --build build --target test --verbose
+
+    - name: Build lcov report
+      run: cmake --build build --target lcov
+
+    - name: Upload lcov report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: build/lcov/html
+        retention-days: 5
+
+    - name: Add report to README.md
+      uses: romeovs/lcov-reporter-action@v0.2.16
+      with:
+        lcov-file: build/lcov/data/capture/all_targets.info
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        delete-old-comments: true
