@@ -1,4 +1,5 @@
 ![Checks status](https://github.com/ivan12093/technopark-cpp-task-2/actions/workflows/cmake.yml/badge.svg)
+[Detailed Coverage](https://app.codecov.io/gh/ivan12093/technopark-cpp-task-2/tree/develop)
 
 # Домашнее задание №2
 Выполнил: Булгаков Иван **WEB-12**  
