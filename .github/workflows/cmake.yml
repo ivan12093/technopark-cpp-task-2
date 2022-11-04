@@ -17,7 +17,7 @@ jobs:
       run: git submodule update --init
 
     - name: Install lcov
-      run: sudo apt -y install lcov
+      run: sudo apt -y install lcov gcovr
 
     - name: Build
       run: cmake -H. -Bbuild  -DBUILD_COVERAGE=ON && cmake --build build
@@ -31,11 +31,14 @@ jobs:
     - name: Build lcov report
       run: cmake --build build --target lcov
 
-    - name: Upload lcov report as artifact
+    - name: Prepare artifact
+      run: gcovr -r . > report.txt
+
+    - name: Upload coverage report as artifact
       uses: actions/upload-artifact@v3
       with:
         name: coverage-report
-        path: build/lcov/html
+        path: report.txt
         retention-days: 5
 
     - uses: codecov/codecov-action@v3
