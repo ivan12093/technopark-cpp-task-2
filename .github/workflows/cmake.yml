@@ -35,9 +35,6 @@ jobs:
         path: build/lcov/html
         retention-days: 5
 
-    - name: Add report to README.md
-      uses: romeovs/lcov-reporter-action@v0.2.16
-      with:
-        lcov-file: build/lcov/data/capture/all_targets.info
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        delete-old-comments: true
+    - name: Upload coverage reports to Codecov
+      run: curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov
+

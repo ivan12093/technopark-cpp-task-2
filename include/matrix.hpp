@@ -2,18 +2,19 @@
 #define TECHNOPARK_CPP_TASK_2_MATRIX_HPP
 
 #include <utility>
-using std::size_t;
+#include <cassert>
+#include <algorithm>
+#include <type_traits>
 
 #include "vector.hpp"
 
+// T must support the multiplication, addition, subtraction operator
 template<class T>
 class Matrix {
 private:
     Vector<Vector<T>> data;
     size_t rows = 0;
     size_t cols = 0;
-    T _determinant(const Matrix& mtx) const;
-    Matrix downsized(size_t row, size_t col) const;
 public:
     Matrix() = default;
     Matrix(size_t _rows, size_t _cols);
@@ -71,66 +72,19 @@ public:
     void swap(Matrix& other) noexcept;
 };
 
-#include <cassert>
-#include <algorithm>
-
 template<class T>
 Matrix<T>::Matrix(size_t _rows, size_t _cols): rows(_rows), cols(_cols) {
-    assert(rows != 0);
-    assert(cols != 0);
+    if (_rows == 0 || _cols == 0)
+        throw std::runtime_error("Matrix can't be zero size");
     data = Vector<Vector<T>>(rows);
     for (size_t i = 0 ; i < rows; ++i)
         data[i] = Vector<T>(cols);
 }
 
 template<class T>
-Matrix<T>::Matrix(const Matrix<T>& other) {
-    rows = other.rows;
-    cols = other.cols;
-    data = other.data;
-}
-
-template<class T>
-Matrix<T>::~Matrix() {
-    rows = 0;
-    cols = 0;
-}
-
-template<class T>
-Matrix<T>& Matrix<T>::operator=(const Matrix<T>& other) {
-    if (this == &other)
-        return *this;
-    Matrix<T> tmp(other);
-    swap(tmp);
-    return *this;
-}
-
-template<class T>
-void Matrix<T>::swap(Matrix<T> &other) noexcept {
-    std::swap(data, other.data);
-    std::swap(rows, other.rows);
-    std::swap(cols, other.cols);
-}
-
-template<class T>
-Matrix<T>& Matrix<T>::operator=(Matrix&& other) noexcept {
-    if (this == &other)
-        return *this;
-    swap(other);
-    return *this;
-}
-
-template<class T>
-Matrix<T>::Matrix(Matrix<T> &&other) noexcept {
-    if (this == &other)
-        return;
-    swap(other);
-}
-
-template<class T>
 Matrix<T>::Matrix(T **_data, size_t _rows, size_t _cols) {
-    assert(_rows != 0);
-    assert(_rows != 0);
+    if (_rows == 0 || _cols == 0)
+        throw std::runtime_error("Matrix can't be zero size");
     data = Vector<Vector<T>>(rows);
     rows = _rows;
     cols = _cols;
@@ -139,110 +93,15 @@ Matrix<T>::Matrix(T **_data, size_t _rows, size_t _cols) {
 }
 
 template<class T>
-Matrix<T> Matrix<T>::transposed() const {
-    Matrix result(cols, rows);
-    for (size_t i = 0; i < rows; ++i)
-        for (size_t j = 0; j < cols; ++j)
-            result.data[j][i] = data[i][j];
-    return result;
-}
-
-template<class T>
-Matrix<T> Matrix<T>::operator-(const Matrix &other) {
-    assert(rows == other.rows);
-    assert(cols == other.cols);
-    Matrix result(rows, cols);
-    for (size_t i = 0; i < rows; ++i)
-        result[i] = data[i] - other.data[i];
-    return result;
-}
-
-template<class T>
-Matrix<T> Matrix<T>::operator+(const Matrix &other) {
-    assert(rows == other.rows);
-    assert(cols == other.cols);
-    Matrix result(rows, cols);
-    for (size_t i = 0; i < rows; ++i)
-        result[i] = data[i] + other.data[i];
-    return result;
-}
-
-template<class T>
-Matrix<T> Matrix<T>::operator*(const Matrix &other) {
-    assert(rows == other.rows);
-    assert(cols == other.cols);
-    Matrix result(rows, cols);
-    for (size_t i = 0; i < rows; ++i)
-        result[i] = data[i] * other.data[i];
-    return result;
-}
-
-template<class T>
-Matrix<T>& Matrix<T>::operator*=(const T& other) {
-    for (size_t i = 0; i < rows; ++i)
-        data[i] = data[i] * other;
-    return *this;
-}
-
-template<class T>
-Matrix<T> operator*(const Matrix<T> &a, const T &b) {
-    Matrix result(a.rows, a.cols);
-    for (size_t i = 0; i < a.rows; ++i)
-        for (size_t j = 0; j < a.cols; ++j)
-            result.data[i][j] = a.data[i][j] * b;
-    return result;
-}
-
-template<class T>
-T Matrix<T>::_determinant(const Matrix& mtx) const {
-    assert(mtx.rows == mtx.cols);
-    if (mtx.rows == 1)
-        return mtx[0][0];
-    if (mtx.rows == 2)
-        return mtx[0][0] * mtx[1][1] - mtx[0][1] * mtx[1][0];
-    T result(0);
-    for (size_t i = 0; i < mtx.rows; ++i) {
-        T mul = i % 2 == 0 ? 1 : -1;
-        result += mul * mtx.data[i][0] * _determinant(mtx.downsized(i, 0));
-    }
-    return result;
-}
-
-template<class T>
-T Matrix<T>::determinant() const {
-    assert(rows == cols);
-    Matrix<T> tmp(*this);
-    T det(1);
-    for (size_t i = 0; i < rows; ++i) {
-        size_t k = i;
-        for (size_t j = i + 1; j < rows; ++j)
-            if (abs(tmp[j][i]) > abs(tmp[k][i]))
-                k = j;
-        if (abs(tmp[k][i]) < DBL_EPSILON) {
-            det = 0;
-            break;
-        }
-        tmp[i].swap(tmp[k]);
-        if (i != k)
-            det = -det;
-        det *= tmp[i][i];
-        for (size_t j = i + 1; j < rows; ++j)
-            tmp.data[i][j] /= tmp[i][i];
-        for (size_t j = 0; j < rows; ++j)
-            if (j != i && abs(tmp[j][i]) > DBL_EPSILON)
-                for (size_t q = i + 1; q < rows; ++q)
-                    tmp[j][q] -= tmp[i][q] * tmp[j][i];
-    }
-    return det;
-}
-
-template<class T>
-Vector<T> Matrix<T>::getDiag() const {
-    size_t elems_in_diag = std::min(rows, cols);
-    Vector<T> result(elems_in_diag);
-    for (size_t i = 0; i < elems_in_diag; ++i)
-        result[i] = data[i][i];
-    return result;
+Matrix<T>::Matrix(std::initializer_list<Vector<T>> initializerList) {
+    if (initializerList.size() == 0)
+        throw std::runtime_error("Matrix can't be zero size");
+    rows = initializerList.size();
+    cols = initializerList.begin()->size();
+    data = Vector<Vector<T>>(rows);
+    auto it_dst = data.begin();
+    for (auto it_src = initializerList.begin(); it_src < initializerList.end(); ++it_src, ++it_dst)
+        *it_dst = *it_src;
 }
 
 template<class T>
@@ -262,35 +121,102 @@ Matrix<T>::Matrix(Vector<Vector<T>> vec_of_vec) {
 }
 
 template<class T>
-Matrix<T>::Matrix(std::initializer_list<Vector<T>> initializerList) {
-    assert(initializerList.size() != 0);
-    rows = initializerList.size();
-    cols = initializerList.begin()->size();
-    data = Vector<Vector<T>>(rows);
-    auto it_dst = data.begin();
-    for (auto it_src = initializerList.begin(); it_src < initializerList.end(); ++it_src, ++it_dst)
-        *it_dst = *it_src;
-}
-
-template<class T>
 Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initializerList) {
-    assert(initializerList.size() != 0);
+    if (initializerList.size() == 0)
+        throw std::runtime_error("Matrix can't be zero size");
     rows = initializerList.size();
     cols = initializerList.begin()->size();
-    assert(cols != 0);
+    if (cols == 0)
+        throw std::runtime_error("Matrix can't be zero size");
     data = Vector<Vector<T>>(rows);
     auto it_dst = data.begin();
     for (auto it_src = initializerList.begin(); it_src < initializerList.end(); ++it_src, ++it_dst) {
-        assert(it_src->size() == cols);
+        if (it_src->size() != cols)
+            throw std::runtime_error("The rows in the matrix cannot be of different sizes");
         *it_dst = *it_src;
     }
 }
 
 template<class T>
-Vector<T> Matrix<T>::getColumn(size_t idx) const {
-    Vector<T> result(rows, Column);
+Matrix<T>::Matrix(const Matrix<T>& other) {
+    rows = other.rows;
+    cols = other.cols;
+    data = other.data;
+}
+
+template<class T>
+Matrix<T>::Matrix(Matrix<T> &&other) noexcept {
+    if (this == &other)
+        return;
+    swap(other);
+}
+
+template<class T>
+Matrix<T>::~Matrix() {
+    rows = 0;
+    cols = 0;
+}
+
+template<class T>
+Matrix<T>& Matrix<T>::operator=(const Matrix<T>& other) {
+    if (this == &other)
+        return *this;
+    Matrix<T> tmp(other);
+    swap(tmp);
+    return *this;
+}
+
+template<class T>
+Matrix<T>& Matrix<T>::operator=(Matrix&& other) noexcept {
+    if (this == &other)
+        return *this;
+    swap(other);
+    return *this;
+}
+
+template<class T>
+Matrix<T> Matrix<T>::operator-(const Matrix &other) {
+    if (rows != other.rows || cols != other.cols)
+        throw std::runtime_error("Operands must be of the same dimension");
+    Matrix result(rows, cols);
     for (size_t i = 0; i < rows; ++i)
-        result[i] = data[i][idx];
+        result[i] = data[i] - other.data[i];
+    return result;
+}
+
+template<class T>
+Matrix<T> Matrix<T>::operator+(const Matrix &other) {
+    if (rows != other.rows || cols != other.cols)
+        throw std::runtime_error("Operands must be of the same dimension");
+    Matrix result(rows, cols);
+    for (size_t i = 0; i < rows; ++i)
+        result[i] = data[i] + other.data[i];
+    return result;
+}
+
+template<class T>
+Matrix<T> Matrix<T>::operator*(const Matrix &other) {
+    if (rows != other.rows || cols != other.cols)
+        throw std::runtime_error("Operands must be of the same dimension");
+    Matrix result(rows, cols);
+    for (size_t i = 0; i < rows; ++i)
+        result[i] = data[i] * other.data[i];
+    return result;
+}
+
+template<class T>
+Matrix<T>& Matrix<T>::operator*=(const T& other) {
+    for (size_t i = 0; i < rows; ++i)
+        data[i] = data[i] * other;
+    return *this;
+}
+
+template<class T>
+Matrix<T> operator*(const Matrix<T> &a, const T &b) {
+    Matrix result(a.rows, a.cols);
+    for (size_t i = 0; i < a.rows; ++i)
+        for (size_t j = 0; j < a.cols; ++j)
+            result.data[i][j] = a.data[i][j] * b;
     return result;
 }
 
@@ -395,7 +321,9 @@ Matrix<T>& Matrix<T>::operator-=(const T &other) {
 template<class T>
 Matrix<T> Matrix<T>::operator*(const Vector<T> &other) {
     if (other.get_format() == Row) {
-        assert(cols == 1);
+        if (cols != 1)
+            throw std::runtime_error("When multiplying by a vector-column there "
+                                     "should be one column in the matrix");
         Matrix result(rows, other.size());
         for (size_t i = 0; i < result.rows; ++i) {
             for (size_t j = 0; j < result.cols; ++j) {
@@ -404,7 +332,9 @@ Matrix<T> Matrix<T>::operator*(const Vector<T> &other) {
         }
         return result;
     }
-    assert(cols == other.size());
+    if (cols != other.size())
+        throw std::runtime_error("The number of columns in the matrix doesn't "
+                                 "match the size of the vector");
     Matrix result(rows, 1);
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < other.size(); ++j)
@@ -416,14 +346,18 @@ Matrix<T> Matrix<T>::operator*(const Vector<T> &other) {
 template<class U>
 Matrix<U> operator*(const Vector<U> &a, const Matrix<U> &b) {
     if (a.get_format() == Row) {
-        assert(a.size() == b.rows);
+        if (a.size() != b.rows)
+            throw std::runtime_error("The number of rows in the matrix doesn't "
+                                     "match the size of the vector");
         Matrix<U> result(1, b.cols);
         for (size_t i = 0; i < result.cols; ++i)
             for (size_t j = 0; j < b.rows; ++j)
                 result[0][i] += a[j] * b[j][i];
         return result;
     }
-    assert(b.rows == 1);
+    if (b.rows != 1)
+        throw std::runtime_error("When multiplying by a vector-row there "
+                                 "should be one row in the matrix");
     Matrix<U> result(a.size(), b.cols);
     for (size_t i = 0; i < result.rows; ++i)
         for (size_t j = 0; j < result.cols; ++j)
@@ -433,7 +367,10 @@ Matrix<U> operator*(const Vector<U> &a, const Matrix<U> &b) {
 
 template<class T>
 Matrix<T> Matrix<T>::dot(const Matrix &other) {
-    assert(cols == other.rows);
+    if (cols != other.rows)
+        throw std::runtime_error("The number of columns of the left operand "
+                                 "differs from the number of rows of the "
+                                 "right operand");
     Matrix result(rows, other.cols);
     for (size_t i = 0; i < result.rows; ++i)
         for (size_t j = 0; j < result.cols; ++j) {
@@ -444,23 +381,65 @@ Matrix<T> Matrix<T>::dot(const Matrix &other) {
 }
 
 template<class T>
-Matrix<T> Matrix<T>::downsized(size_t row, size_t col) const {
-    Matrix res(*this);
-    assert(res.rows != 0);
-    for (size_t i = row; i < rows - 1; ++i)
-        res[i] = res[i + 1];
-    --res.rows;
-    assert(res.rows != 0);
-    for (size_t j = col; j < cols - 1; ++j)
-        for (size_t i = 0; i < res.rows; ++i)
-            res[i][j] = res[i][j + 1];
-    --res.cols;
-    return res;
+T Matrix<T>::determinant() const {
+    if (rows != cols)
+        throw std::runtime_error("To get the determinant of matrix, the matrix "
+                                 "must be square");
+    if (rows == 1)
+        return data[0][0];
+    if (rows == 2)
+        return data[0][0] * data[1][1] - data[0][1] * data[1][0];
+    if (rows == 3)
+        return data[0][0] * (data[1][1] * data[2][2] - data[1][2] * data[2][1]) -
+        data[0][1] * (data[1][0] * data[2][2] - data[2][0] * data[1][2]) +
+        data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
+    Matrix<T> tmp(*this);
+    T det(1);
+    for (size_t i = 0; i < rows; ++i) {
+        size_t k = i;
+        for (size_t j = i + 1; j < rows; ++j)
+            if (abs(tmp[j][i]) > abs(tmp[k][i]))
+                k = j;
+        if (abs(tmp[k][i]) < DBL_EPSILON) {
+            det = 0;
+            break;
+        }
+        tmp[i].swap(tmp[k]);
+        if (i != k)
+            det = -det;
+        det *= tmp[i][i];
+        for (size_t j = i + 1; j < rows; ++j)
+            tmp.data[i][j] /= tmp[i][i];
+        for (size_t j = 0; j < rows; ++j)
+            if (j != i && abs(tmp[j][i]) > DBL_EPSILON)
+                for (size_t q = i + 1; q < rows; ++q)
+                    tmp[j][q] -= tmp[i][q] * tmp[j][i];
+    }
+    return det;
+}
+
+template<class T>
+Vector<T> Matrix<T>::getDiag() const {
+    size_t elems_in_diag = std::min(rows, cols);
+    Vector<T> result(elems_in_diag);
+    for (size_t i = 0; i < elems_in_diag; ++i)
+        result[i] = data[i][i];
+    return result;
+}
+
+template<class T>
+Vector<T> Matrix<T>::getColumn(size_t idx) const {
+    Vector<T> result(rows, Column);
+    for (size_t i = 0; i < rows; ++i)
+        result[i] = data[i][idx];
+    return result;
 }
 
 template<class T>
 Matrix<T> Matrix<T>::inversed() const {
-    assert(rows == cols);
+    if (rows != cols)
+        throw std::runtime_error("To get the inverse matrix, the matrix must "
+                                 "be square");
     Matrix result(rows, rows);
     Matrix tmp(*this);
     for (size_t i = 0; i < rows; ++i)
@@ -500,6 +479,22 @@ Matrix<T> Matrix<T>::inversed() const {
         for (size_t j = 0; j < rows; ++j)
             result[i][j] = concat[i][j + rows];
     return result;
+}
+
+template<class T>
+Matrix<T> Matrix<T>::transposed() const {
+    Matrix result(cols, rows);
+    for (size_t i = 0; i < rows; ++i)
+        for (size_t j = 0; j < cols; ++j)
+            result.data[j][i] = data[i][j];
+    return result;
+}
+
+template<class T>
+void Matrix<T>::swap(Matrix<T> &other) noexcept {
+    std::swap(data, other.data);
+    std::swap(rows, other.rows);
+    std::swap(cols, other.cols);
 }
 
 #endif //TECHNOPARK_CPP_TASK_2_MATRIX_HPP

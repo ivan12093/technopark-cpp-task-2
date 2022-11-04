@@ -3,19 +3,19 @@
 #include "matrix.hpp"
 
 #define EXPECT_EQ_MATRIX(a, b) ASSERT_EQ(a.size().first, b.size().first); \
-ASSERT_EQ(a.size().second, b.size().second);                          \
+ASSERT_EQ(a.size().second, b.size().second);                              \
 for (size_t i = 0; i < a.size().first; ++i)                               \
 for (size_t j = 0; j < a.size().second; ++j)                              \
 EXPECT_EQ(a[i][j], b[i][j]);
 
 #define EXPECT_EQ_MATRIX_DBL(a, b) ASSERT_EQ(a.size().first, b.size().first); \
-ASSERT_EQ(a.size().second, b.size().second);                          \
-for (size_t i = 0; i < a.size().first; ++i)                               \
-for (size_t j = 0; j < a.size().second; ++j)                              \
+ASSERT_EQ(a.size().second, b.size().second);                                  \
+for (size_t i = 0; i < a.size().first; ++i)                                   \
+for (size_t j = 0; j < a.size().second; ++j)                                  \
 EXPECT_DOUBLE_EQ(a[i][j], b[i][j]);
 
 #define EXPECT_EQ_VECTOR(a, b) ASSERT_EQ(a.size(), b.size()); \
-EXPECT_EQ(a.get_format(), b.get_format());                                \
+EXPECT_EQ(a.get_format(), b.get_format());                    \
 for (size_t i = 0; i < a.size(); ++i)                         \
 EXPECT_EQ(a[i], b[i]);
 

@@ -1,11 +1,14 @@
 #ifndef TECHNOPARK_CPP_TASK_2_VECTOR_HPP
 #define TECHNOPARK_CPP_TASK_2_VECTOR_HPP
 
+#include <algorithm>
+#include <cassert>
 #include <utility>
-using std::size_t;
+#include <type_traits>
 
 using Format = enum Format_{Row, Column};
 
+// T must support the multiplication, addition, subtraction operator
 template<class T>
 class Vector {
 private:
@@ -58,31 +61,24 @@ public:
     T* end() const;
 };
 
-#include <algorithm>
-#include <cassert>
-
 template<class T>
 Vector<T>::Vector(T* data, size_t size, Format format): Vector(size, format) {
-    assert(size != 0);
+    if (_size == 0)
+        throw std::runtime_error("The vector size cannot be zero");
     std::copy(data, data + size, _data);
 }
 
 template<class T>
 Vector<T>::Vector(size_t size, Format format): _size(size), _format(format) {
-    assert(size != 0);
+    if (_size == 0)
+        throw std::runtime_error("The vector size cannot be zero");
     _data = new T[size]();
 }
 
 template<class T>
-Vector<T>::~Vector() {
-    delete[] _data;
-    _data = nullptr;
-    _size = 0;
-}
-
-template<class T>
 Vector<T>::Vector(std::initializer_list<T> initializerList, Format format): Vector(initializerList.size(), format) {
-    assert(initializerList.size() != 0);
+    if (_size == 0)
+        throw std::runtime_error("The vector size cannot be zero");
     std::copy(initializerList.begin(), initializerList.end(), _data);
 }
 
@@ -92,26 +88,14 @@ Vector<T>::Vector(const Vector &other): Vector(other._size, other._format) {
 }
 
 template<class T>
-T* Vector<T>::begin() const {
-    return _data;
-}
-
-template<class T>
-T* Vector<T>::end() const {
-    return _data + _size;
-}
-
-template<class T>
-void Vector<T>::swap(Vector &other) noexcept {
-std::swap(_data, other._data);
-std::swap(_size, other._size);
-std::swap(_format, other._format);
-}
-
-template<class T>
 Vector<T>::Vector(Vector &&other) noexcept {
-if (this != &other)
-swap(other);
+    if (this != &other)
+        swap(other);
+}
+
+template<class T>
+Vector<T>::~Vector() {
+    delete[] _data;
 }
 
 template<class T>
@@ -132,8 +116,12 @@ Vector<T>& Vector<T>::operator=(Vector &&other) noexcept {
 
 template<class T>
 Vector<T> Vector<T>::operator-(const Vector &other) const {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     Vector<T> result(size(), _format);
     for (size_t i = 0; i < size(); ++i)
         result[i] = _data[i] - other[i];
@@ -142,8 +130,12 @@ Vector<T> Vector<T>::operator-(const Vector &other) const {
 
 template<class T>
 Vector<T> Vector<T>::operator+(const Vector &other) const {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     Vector<T> result(size(), _format);
     for (size_t i = 0; i < size(); ++i)
         result[i] = _data[i] + other[i];
@@ -152,8 +144,12 @@ Vector<T> Vector<T>::operator+(const Vector &other) const {
 
 template<class T>
 Vector<T> Vector<T>::operator*(const Vector &other) const {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     Vector<T> result(size(), _format);
     for (size_t i = 0; i < _size; ++i)
         result[i] = _data[i] * other[i];
@@ -201,8 +197,12 @@ Vector<T> Vector<T>::operator+(const T &elem) const {
 
 template<class T>
 Vector<T>& Vector<T>::operator-=(const Vector &other) {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     for (size_t i = 0; i < size(); ++i)
         _data[i] = _data[i] - other[i];
     return *this;
@@ -210,8 +210,12 @@ Vector<T>& Vector<T>::operator-=(const Vector &other) {
 
 template<class T>
 Vector<T>& Vector<T>::operator+=(const Vector &other) {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     for (size_t i = 0; i < size(); ++i)
         _data[i] = _data[i] + other[i];
     return *this;
@@ -219,8 +223,12 @@ Vector<T>& Vector<T>::operator+=(const Vector &other) {
 
 template<class T>
 Vector<T>& Vector<T>::operator*=(const Vector &other) {
-    assert(size() == other.size());
-    assert(get_format() == other.get_format());
+    if (size() != other.size())
+        throw std::runtime_error("The size of the left and right "
+                                 "operands must be the same");
+    if (get_format() != other.get_format())
+        throw std::runtime_error("The format of the left and right "
+                                 "operands must be the same");
     for (size_t i = 0; i < size(); ++i)
         _data[i] = _data[i] * other[i];
     return *this;
@@ -281,5 +289,21 @@ Format Vector<T>::get_format() const {
     return _format;
 }
 
+template<class T>
+T* Vector<T>::begin() const {
+    return _data;
+}
+
+template<class T>
+T* Vector<T>::end() const {
+    return _data + _size;
+}
+
+template<class T>
+void Vector<T>::swap(Vector &other) noexcept {
+    std::swap(_data, other._data);
+    std::swap(_size, other._size);
+    std::swap(_format, other._format);
+}
 
 #endif //TECHNOPARK_CPP_TASK_2_VECTOR_HPP
