@@ -411,7 +411,7 @@ T Matrix<T>::determinant() const {
         for (size_t j = i + 1; j < rows; ++j)
             tmp.data[i][j] /= tmp[i][i];
         for (size_t j = 0; j < rows; ++j)
-            if (j != i && abs(tmp[j][i]) > std::numeric_limits<double>::epsilon())
+            if (j != i && abs(tmp[j][i]) > DBL_EPSILON)
                 for (size_t q = i + 1; q < rows; ++q)
                     tmp[j][q] -= tmp[i][q] * tmp[j][i];
     }

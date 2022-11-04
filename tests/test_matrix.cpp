@@ -266,6 +266,17 @@ TEST(Matrix_Determinant, Default) {
     EXPECT_DOUBLE_EQ(det, -42);
 }
 
+TEST(Matrix_Determinant, Big_Size) {
+    Matrix<double> matrix = {
+            {1.0, 4.0, 7.0, 13.0},
+            {2.0, 1.0, 8.0, 10.0},
+            {3.0, 2.0, 3.0, 14.0},
+            {4.0, 7.0, 10.0, 1.0}
+    };
+    double det = matrix.determinant();
+    EXPECT_DOUBLE_EQ(det, -1854);
+}
+
 TEST(Matrix_Inversed, Default) {
     Matrix<double> matrix = {
             {1.0, 2.0, 3.0},
