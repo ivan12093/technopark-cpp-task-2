@@ -41,9 +41,14 @@ jobs:
         path: report.txt
         retention-days: 5
 
+    - name: Collect info for codecov
+      run: |
+        lcov --capture --directory . -o 1.info && lcov --remove 1.info '/usr/*' --output-file 1.info\
+        && lcov --list 1.info
+
     - uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: build/lcov/data/capture/all_targets.info
+        files: 1.info
         fail_ci_if_error: true
         verbose: true
