@@ -25,6 +25,9 @@ jobs:
     - name: Run tests
       run: cmake --build build --target test --verbose
 
+    - name: Run main
+      run: cd build/ && ./task_2 && cd ../
+
     - name: Build lcov report
       run: cmake --build build --target lcov
 
@@ -35,5 +38,9 @@ jobs:
         path: build/lcov/html
         retention-days: 5
 
-    - name: Upload coverage reports to Codecov
-      run: curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }}
+    - uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: build/lcov/data/capture/all_targets.info
+        fail_ci_if_error: true
+        verbose: true
