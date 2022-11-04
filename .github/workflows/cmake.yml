@@ -36,5 +36,4 @@ jobs:
         retention-days: 5
 
     - name: Upload coverage reports to Codecov
-      run: curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov
-
+      run: curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t -t ${{ secrets.CODECOV_TOKEN }}
